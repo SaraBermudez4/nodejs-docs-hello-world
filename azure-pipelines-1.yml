@@ -1,11 +1,46 @@
+trigger:
+- main  # Ajusta esto según la rama que desees usar para desencadenar el pipeline
+
+pool:
+  vmImage: 'ubuntu-latest'  # Usa una imagen de máquina virtual de Ubuntu
+
 jobs:
+- job: BuildAndTest
+  displayName: 'Build and Test Job'
+  steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '16.x'  # Asegúrate de usar la versión LTS de Node.js
+
+  - script: |
+      npm install
+    displayName: 'Install dependencies'
+
+  - script: |
+      npm run build  # Si tienes un script de build en tu package.json
+    displayName: 'Build the application'
+
+  - script: |
+      npm test
+    displayName: 'Run tests'
+
 - deployment: VMDeploy
-  displayName: Web deploy
+  displayName: 'Deploy to VM'
   environment:
-    name: helloworld-2-nodejs-20321
+    name: 'helloworld-2-nodejs-20321'
     resourceType: VirtualMachine
   strategy:
     runOnce:
       deploy:
         steps:
-        - script: echo my first deployment
+        - task: NodeTool@0
+          inputs:
+            versionSpec: '16.x'  # Usa la misma versión de Node.js que en el job anterior
+
+        - script: |
+            npm install
+          displayName: 'Install dependencies on VM'
+
+        - script: |
+            npm run start  # Asegúrate de que tu aplicación se inicie correctamente
+          displayName: 'Start the application'
